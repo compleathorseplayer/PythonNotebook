@@ -16,6 +16,8 @@ It needs nothing but Python itself: no packages to install, not even Jupyter.
 
 It is the Python sibling of [Julia Notebook](https://github.com/compleathorseplayer/JuliaNotebook).
 
+Why it exists, and who it's for: [Python Notebook: a lightweight notebook for you and your AI agent](https://medium.com/@compleathorseplayer/python-notebook-a-lightweight-notebook-for-you-and-your-ai-agent-6dcf85888156) (Medium).
+
 ## What it does
 
 - **Cells from plain text.** Every line starting with `# %%` (or `#%%`) begins a new cell, the

@@ -34,7 +34,7 @@ It is the Python sibling of [Julia Notebook](https://github.com/compleathorsepla
 - **Saves itself.** Edits are saved a second after you stop typing. If the file is changed by
   another program (another editor, or an agent) while you have edits open, it will not
   overwrite that change; it asks you to reload or overwrite.
-- **Close the window to quit.** Closing the browser window saves, and stops everything.
+- **Exit, or just close the window.** Either one saves and stops everything.
 - **Works offline.** Nothing is loaded from the internet; the editor
   ([CodeMirror 5](https://codemirror.net/5/)) is included.
 
@@ -73,7 +73,7 @@ This opens the notebook in your browser. If the file doesn't exist, it is create
 | Up / Down at the edge of a cell | Move into the neighbouring cell |
 
 Each cell also has buttons to run it, add a cell below, or delete it. The top bar has
-**Run all** (stops at the first error), **Stop**, **Restart**, **Reload** and **Save**.
+**Run all** (stops at the first error), **Stop**, **Restart**, **Reload**, **Save** and **Exit**.
 
 A file looks like this:
 
@@ -95,7 +95,15 @@ Your cells run in a separate Python process, started in the notebook file's fold
 1. the one you name: `pynb analysis.py --python ~/envs/ml/bin/python`
 2. an activated virtualenv or conda environment
 3. a `.venv` or `venv` folder in the notebook's folder or one above it
-4. `python3` on your `PATH`
+4. the Python named by the `PYNB_PYTHON` environment variable, if you set one
+5. `python3` on your `PATH`
+
+To use one Python for all your notebooks without typing `--python` each time, add a line
+like this to your shell startup file (`~/.zshrc` on a Mac):
+
+```sh
+export PYNB_PYTHON=~/envs/ml/bin/python
+```
 
 The terminal shows which one it picked. Python Notebook itself adds nothing to that
 environment: the cells need only the packages your code imports.

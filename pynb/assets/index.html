@@ -84,6 +84,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--border)
   <button id="btn-restart" title="Start a fresh Python session: clears all variables and imported modules">Restart</button>
   <button id="btn-reload" title="Re-read the file from disk">Reload</button>
   <button id="btn-save" title="Save (Cmd/Ctrl-S)">Save</button>
+  <button id="btn-exit" title="Save, stop Python and end the session">Exit</button>
 </header>
 <main id="cells"></main>
 <p class="help"><kbd>Shift-Enter</kbd> run and move on · <kbd>Cmd-Enter</kbd> run in place ·
@@ -389,9 +390,31 @@ document.addEventListener("keydown", e => {
 // they cannot be saved without overwriting that change. Otherwise closing is silent.
 window.addEventListener("beforeunload", e => { if (dirty && conflict) { e.preventDefault(); e.returnValue = ""; } });
 
+// Exit saves, stops the server and closes the tab. Browsers only let a page close a tab
+// that a script opened, so if the tab stays, it says the session is over instead.
+let exited = false;
+async function exit(discarded = false) {
+  if (dirty && conflict) {
+    setStatus("your edits can't be saved without overwriting a change made elsewhere: click Exit again to discard them", true);
+    $("btn-exit").onclick = () => { dirty = false; exit(true); };
+    return;
+  }
+  exited = true;
+  clearTimeout(saveTimer);
+  await api("/api/exit", { cells: dirty ? cells.map(c => c.cm.getValue()) : null }).catch(() => {});
+  window.close();
+  const file = escapeText($("name").textContent);
+  document.body.innerHTML = `<p class="help" style="margin-top:30vh; font-size:15px">Session ended:
+    ${discarded ? `your last edits to ${file} were discarded` : `${file} is saved`} and Python has stopped.
+    <br>You can close this tab.</p>`;
+  document.title = "ended · pynb";
+}
+$("btn-exit").onclick = () => exit();
+
 // Closing the window shuts the server down, saving any last edits on the way out.
 // keepalive lets the request finish after the page is gone.
 window.addEventListener("pagehide", () => {
+  if (exited) return;
   const body = JSON.stringify({ cells: dirty && !conflict ? cells.map(c => c.cm.getValue()) : null });
   fetch("/api/bye", { method: "POST", keepalive: true, body,
                       headers: { "X-Pynb-Token": TOKEN, "Content-Type": "application/json" } });

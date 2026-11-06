@@ -71,7 +71,8 @@ def venv_python(root):
 
 def find_python(nbdir, requested=None):
     """The interpreter for the notebook's code: --python, else an active virtualenv or
-    conda env, else a .venv or venv folder next to the notebook or above it, else python3."""
+    conda env, else a .venv or venv folder next to the notebook or above it, else
+    $PYNB_PYTHON, else python3."""
     if requested:
         return shutil.which(requested) or requested
     for var in ("VIRTUAL_ENV", "CONDA_PREFIX"):
@@ -89,6 +90,9 @@ def find_python(nbdir, requested=None):
         if parent == d:
             break
         d = parent
+    default = os.environ.get("PYNB_PYTHON")
+    if default:
+        return shutil.which(os.path.expanduser(default)) or os.path.expanduser(default)
     return shutil.which("python3") or shutil.which("python") or sys.executable
 
 
@@ -255,12 +259,12 @@ class Session:
                 "python": self.python, "cells": split_cells(read_text(self.path))}
 
     # The page was closed: stop, unless a page loads again soon (a reload sends bye, then load).
-    def schedule_exit(self, grace=3):
+    def schedule_exit(self, grace=3, reason="browser window closed"):
         g = self.generation
 
         def check():
             if self.generation == g:
-                print("pynb: browser window closed, stopping.", flush=True)
+                print(f"pynb: {reason}, stopping.", flush=True)
                 self.worker.kill()
                 os._exit(0)
 
@@ -338,6 +342,11 @@ class Handler(BaseHTTPRequestHandler):
                 s.save(body["cells"])           # never overwrites a file changed elsewhere
             s.schedule_exit()
             return self.reply(200, {"ok": True})
+        if p == "/api/exit":                    # the Exit button: stop now, no grace period
+            if body.get("cells") is not None:
+                s.save(body["cells"])
+            s.schedule_exit(grace=0.2, reason="Exit clicked")
+            return self.reply(200, {"ok": True})
         self.reply(404, "not found", "text/plain")
 
     # /api/run answers with newline-delimited JSON, one line per event, written as they happen.
@@ -396,7 +405,7 @@ def main(argv=None):
         prog="pynb", description="Open a Python file with `# %%` cells as a notebook in the browser.")
     ap.add_argument("file", help="the .py file (created if it doesn't exist)")
     ap.add_argument("--python", help="the Python to run cells with (default: an active or "
-                    "nearby virtualenv, else python3 on your PATH)")
+                    "nearby virtualenv, else $PYNB_PYTHON, else python3)")
     ap.add_argument("--port", type=int, default=8765, help="first port to try (default 8765)")
     args = ap.parse_args(argv)
     serve(args.file, args.port, args.python, open_browser=not os.environ.get("PYNB_NO_BROWSER"))

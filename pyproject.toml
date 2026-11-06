@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-notebook"
+version = "0.1.0"
+description = "A minimal browser notebook for plain .py files with # %% cells"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/compleathorseplayer/PythonNotebook"
+
+[project.scripts]
+pynb = "pynb.server:main"
+
+[tool.setuptools]
+packages = ["pynb"]
+
+[tool.setuptools.package-data]
+pynb = ["assets/*"]

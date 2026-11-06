@@ -1,0 +1,15 @@
+#!/bin/sh
+# pynb FILE.py — open a Python file with `# %%` cells as a notebook in the browser.
+# Runs straight from a clone; the server needs only Python's standard library. Notebook
+# code runs in a separate Python: an active or nearby virtualenv, else python3.
+
+# Find the app folder, following symlinks (e.g. ~/.local/bin/pynb -> <app>/bin/pynb).
+src=$0
+while [ -L "$src" ]; do
+    dir=$(cd -P "$(dirname "$src")" && pwd)
+    src=$(readlink "$src")
+    case $src in /*) ;; *) src=$dir/$src ;; esac
+done
+app=$(cd -P "$(dirname "$src")/.." && pwd)
+
+exec python3 "$app/pynb/server.py" "$@"
